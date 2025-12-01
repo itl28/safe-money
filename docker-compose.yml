@@ -28,6 +28,22 @@ services:
     networks:
       - db_network
 
+  api:
+    build: ./api          # carpeta donde está tu Dockerfile y app.py
+    container_name: expenses_api
+    environment:
+      POSTGRES_DB: mydatabase
+      POSTGRES_USER: myuser
+      POSTGRES_PASSWORD: mypassword
+      DB_HOST: postgres   # servicio de postgres
+      DB_PORT: 5432
+    ports:
+      - "8081:8080"       # afuera 8081 -> dentro 8080
+    depends_on:
+      - postgres
+    networks:
+      - db_network
+
 volumes:
   postgres_data:
 
