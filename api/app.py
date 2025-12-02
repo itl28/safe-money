@@ -16,19 +16,43 @@ def get_connection():
     return conn
 
 
+@app.get("/")
+def health():
+    return {"status": "running"}
+
+
 @app.post("/expense")
 def save_expense():
-    data = request.get_json()
+    """
+    JSON esperado (tal como lo guarda tu gastos.json):
+
+    {
+      "date": "2025-11-28T13:53:00-06:00",
+      "payment_method": "APPLE PAY/CARD",
+      "bank": "BBVA",
+      "amount": 65,
+      "type": "Comida",
+      "desc": "Café "
+    }
+    """
+    data = request.get_json(silent=True)
+
     if not data:
         return jsonify({"ok": False, "error": "No JSON received"}), 400
 
     try:
+        # 'date' viene en formato ISO con zona horaria (-06:00)
         ts = datetime.fromisoformat(data["date"])
         amount = float(data["amount"])
-        bank = data.get("bank")
+
         payment_method = data.get("payment_method")
-        category = data.get("category")
-        description = data.get("description")
+        bank = data.get("bank")
+        category = data.get("type")   # va a la columna 'category'
+        description = data.get("desc")  # va a la columna 'description'
+    except KeyError as e:
+        return jsonify({"ok": False, "error": f"Missing field: {e}"}), 400
+    except ValueError as e:
+        return jsonify({"ok": False, "error": f"Bad value: {e}"}), 400
     except Exception as e:
         return jsonify({"ok": False, "error": f"Bad payload: {e}"}), 400
 
@@ -51,12 +75,5 @@ def save_expense():
     return jsonify({"ok": True})
 
 
-
-@app.get("/")
-def health():
-    return {"status": "running"}
-
-
 if __name__ == "__main__":
-    # Para probar local, si quieres
     app.run(host="0.0.0.0", port=8080)
